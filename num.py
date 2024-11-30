@@ -1,7 +1,7 @@
 import numpy as np
 import tkinter as tk
 from tkinter import simpledialog, messagebox
-from sympy import symbols, lambdify, simplify, cos, sin, expand, latex
+from sympy import symbols, lambdify, simplify, expand, latex
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -48,14 +48,13 @@ def newton_method(f, f_prime, initial_guess=None, tolerance=0.0001, max_iteratio
 def get_equation_input():
     equation = simpledialog.askstring("Equation Input", "Enter the equation (use 'x' as the variable):")
     x_symbol = symbols('x')
-    
-    # Спрощення рівняння та створення функції для обчислень
+
     f_symbolic = simplify(equation)
-    f = lambdify(x_symbol, f_symbolic, 'numpy')  # Перетворення рівняння на lambda-функцію
+    f = lambdify(x_symbol, f_symbolic, 'numpy')  
 
     # Визначення похідної від рівняння
     f_prime_symbolic = simplify(f_symbolic.diff(x_symbol))
-    f_prime = lambdify(x_symbol, f_prime_symbolic, 'numpy')  # Перетворення похідної на lambda-функцію
+    f_prime = lambdify(x_symbol, f_prime_symbolic, 'numpy')
     
     return f, f_prime
 
@@ -67,9 +66,9 @@ def transform_fx_to_gx_simple(f_eq, psi):
     f = simplify(f_eq)
     
     try:
-        # Використовуємо формулу g(x) = x - psi * f(x)
+       
         g = (x - psi * f)
-        g_lambda = lambdify(x, g, 'numpy')  # Повертаємо функцію g(x) у вигляді lambda
+        g_lambda = lambdify(x, g, 'numpy')  
 
         return g_lambda
     except Exception as e:
@@ -77,17 +76,15 @@ def transform_fx_to_gx_simple(f_eq, psi):
         return None
 
 def nonlinear_simple_iteration(f_eq, initial_guess, psi, tolerance=0.0001, max_iterations=1000000):  
-    g = transform_fx_to_gx_simple(f_eq, psi)  # Створюємо g(x) = x - f(x)
+    g = transform_fx_to_gx_simple(f_eq, psi)  
     x = round(initial_guess, 5)
 
     for iteration in range(max_iterations):
         x_new = g(x)
         x_new = round(x_new, 5)
-
-        # print(f"Iteration {iteration}: x = {round(x, 5)}, g(x) = {x_new}")
         
         if np.abs(x_new - x) < tolerance:  
-            return x_new, iteration + 1  # Повертаємо результат, якщо досягнута точність
+            return x_new, iteration + 1  
         
         x = x_new
     
@@ -160,7 +157,6 @@ def newton_interpolation(data_points):
     n = len(data_points)
     x, y = zip(*data_points)
 
-    # Initialize the divided differences table
     divided_diff = np.zeros((n, n))
     divided_diff[:, 0] = y
 
@@ -168,7 +164,6 @@ def newton_interpolation(data_points):
         for i in range(n - j):
             divided_diff[i][j] = (divided_diff[i + 1][j - 1] - divided_diff[i][j - 1]) / (x[i + j] - x[i])
 
-    # Build the symbolic polynomial
     x_sym = symbols('x')
     polynomial = divided_diff[0][0]
     term = 1
@@ -176,8 +171,7 @@ def newton_interpolation(data_points):
     for i in range(1, n):
         term *= (x_sym - x[i-1])
         polynomial += divided_diff[0][i] * term
-    
-    # Expand the polynomial to get a more readable form
+
     expanded_poly = expand(polynomial)
     
     def interpolated_polynomial(t):
@@ -197,15 +191,12 @@ def lagrange_interpolation(data_points):
                 poly *= (x_sym - x_vals[j]) / (x_vals[i] - x_vals[j])
         return poly
 
-    # Construct the interpolated polynomial
     polynomial = sum(y * basis_poly(i) for i, y in enumerate(y_vals))
     expanded_poly = expand(polynomial)
-    
-    # Convert to a callable function
+
     interpolated_func = lambdify(x_sym, expanded_poly, 'numpy')
 
     return interpolated_func, latex(expanded_poly)
-
 
 def get_lagrange_interpolation_data():
     data_input = simpledialog.askstring("Lagrange Interpolation", "Enter data points (x,y/x,y):")
@@ -222,16 +213,14 @@ def rectangular_integration(f, a, b, n):
     integral_sum = h * np.sum(f(x_vals[:-1]))
     return integral_sum
 
-# Метод трапецій
 def trapezoidal_integration(f, a, b, n):
     x_vals = np.linspace(a, b, n + 1)
     h = (b - a) / n
     integral_sum = (h / 2) * (f(x_vals[0]) + 2 * np.sum(f(x_vals[1:-1])) + f(x_vals[-1]))
     return integral_sum
 
-# Метод Сімпсона
 def simpson_integration(f, a, b, n):
-    if n % 2 == 1:  # Метод Сімпсона працює лише для парної кількості інтервалів
+    if n % 2 == 1:  
         n += 1
     x_vals = np.linspace(a, b, n + 1)
     h = (b - a) / n
@@ -264,7 +253,6 @@ def run_numerical_integration(method):
     elif method == "Simpson Integration":
         result = simpson_integration(f, a, b, n)
 
-    # Plot the graph with red-outlined and red-transparent rectangles
     x_vals = np.linspace(a, b, n + 1)
     y_vals = f(x_vals)
 
@@ -280,24 +268,19 @@ def run_numerical_integration(method):
         plt.title('Trapezoidal Integration')
     elif method == "Simpson Integration":
         plt.title('Simpson Integration')
-    
-    # plt.title('Numerical Integration')
+
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
 
-    # Display the graph
     plt.show()
 
-    # Create a new result window
     result_window = tk.Tk()
     result_window.title("Numerical Integration Result")
 
-    # Display the result
     result_label = tk.Label(result_window, text=f"The result of numerical integration is: {result:.5f}")
     result_label.pack(pady=10)
 
-    # Button to return to the list of methods
     back_to_method_selection_button = tk.Button(result_window, text="Back to Method Selection", command=lambda: [result_window.destroy(), show_method_selection()])
     back_to_method_selection_button.pack(pady=10)
 
@@ -354,50 +337,41 @@ def display_interpolation(interpolated_result, data_points, method_name):
     if interpolated_polynomial is not None:
         x_vals, y_vals = zip(*data_points)
 
-        # Get evaluation points
         eval_points = get_evaluation_points()
         if eval_points is None:
             return
 
-        # Create result window
         result_window = tk.Tk()
         result_window.title(f"{method_name} Result")
-        
-        # Create main frame with scrollbar
+
         main_frame = tk.Frame(result_window)
         main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Add canvas with scrollbar
+
         canvas = tk.Canvas(main_frame)
         scrollbar = tk.Scrollbar(main_frame, orient=tk.VERTICAL, command=canvas.yview)
         scrollable_frame = tk.Frame(canvas)
-        
-        # Configure scroll
+
         scrollable_frame.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
-        
-        # Pack scrollbar elements
+
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        # Create figure for equation
+
         fig_eq = Figure(figsize=(8, 1))
         ax_eq = fig_eq.add_subplot(111)
         ax_eq.text(0.5, 0.5, f"${equation_latex}$", 
                   fontsize=12, horizontalalignment='center',
                   verticalalignment='center')
         ax_eq.axis('off')
-        
-        # Add equation figure to scrollable frame
+
         canvas_eq = FigureCanvasTkAgg(fig_eq, master=scrollable_frame)
         canvas_eq.draw()
         canvas_eq.get_tk_widget().pack(pady=10)
 
-        # Display evaluation points
         result_str = "Evaluation Points:\n"
         for x in eval_points:
             y = interpolated_polynomial(x)
@@ -406,11 +380,9 @@ def display_interpolation(interpolated_result, data_points, method_name):
         result_label = tk.Label(scrollable_frame, text=result_str)
         result_label.pack(pady=10)
 
-        # Create figure for plot
         fig_plot = Figure(figsize=(8, 6))
         ax_plot = fig_plot.add_subplot(111)
-        
-        # Plot data
+
         x_range = np.linspace(min(x_vals), max(x_vals), 100)
         y_interp = [interpolated_polynomial(t) for t in x_range]
         
@@ -425,19 +397,16 @@ def display_interpolation(interpolated_result, data_points, method_name):
         ax_plot.set_ylabel('y')
         ax_plot.legend()
         ax_plot.grid(True)
-        
-        # Add plot to scrollable frame
+
         canvas_plot = FigureCanvasTkAgg(fig_plot, master=scrollable_frame)
         canvas_plot.draw()
         canvas_plot.get_tk_widget().pack(pady=10)
 
-        # Create frame for buttons in the main window (not in scrollable area)
         button_frame = tk.Frame(result_window)
         button_frame.pack(side=tk.BOTTOM, pady=10)
 
-        # Add back button
         def back_to_menu():
-            plt.close('all')  # Close all matplotlib figures
+            plt.close('all') 
             result_window.destroy()
             show_method_selection()
 
@@ -452,9 +421,8 @@ def display_interpolation(interpolated_result, data_points, method_name):
         )
         back_button.pack(side=tk.LEFT, padx=5)
 
-        # Add exit button
         def on_exit():
-            plt.close('all')  # Close all matplotlib figures
+            plt.close('all')  
             result_window.destroy()
             
         exit_button = tk.Button(
@@ -468,7 +436,6 @@ def display_interpolation(interpolated_result, data_points, method_name):
         )
         exit_button.pack(side=tk.LEFT, padx=5)
 
-        # Set window size and position
         window_width = 800
         window_height = 700
         screen_width = result_window.winfo_screenwidth()
@@ -477,10 +444,8 @@ def display_interpolation(interpolated_result, data_points, method_name):
         y = (screen_height - window_height) // 2
         result_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-        # Make sure the window is resizable
         result_window.resizable(True, True)
-        
-        # Add mousewheel binding for scroll
+
         def _on_mousewheel(event):
             canvas.yview_scroll(-1 * (event.delta // 120), "units")
             
